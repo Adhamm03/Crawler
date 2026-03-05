@@ -6,13 +6,13 @@ app = FastAPI(title="Company Info Crawler API")
 
 
 class CompanyRequest(BaseModel):
-    company: str
+    companyName: str
     country: str
 
 
 @app.post("/company-info")
 def company_info(req: CompanyRequest):
-    return get_company_info(req.company, req.country)
+    return get_company_info(req.companyName, req.country)
 
 
 @app.get("/health")

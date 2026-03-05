@@ -1,6 +1,6 @@
 # Company Info Crawler
 
-Fetches structured company intelligence using Tavily web search + GPT-4o-mini extraction, served via a Flask web UI.
+Fetches structured company intelligence using Tavily web search + GPT-4o-mini extraction, served via a FastAPI endpoint.
 
 ## How It Works
 
@@ -15,7 +15,7 @@ Each field gets a confidence score: `high` (from official site) or `low` (from b
 
 **1. Install dependencies**
 ```bash
-pip install requests python-dotenv flask
+pip install requests python-dotenv fastapi uvicorn
 ```
 
 **2. Create `.env`**
@@ -26,16 +26,14 @@ OPENAI_KEY=your_openai_key
 
 **3. Run**
 ```bash
-python app.py
+uvicorn api:app --reload
 ```
-
-Open **http://localhost:5000** in your browser.
 
 ## API
 
-`POST /company`
+`POST /company-info`
 ```json
-{ "company_name": "Acme Corp", "country": "United States" }
+{ "companyName": "Acme Corp", "country": "United States" }
 ```
 
 ## Output
@@ -58,8 +56,6 @@ Open **http://localhost:5000** in your browser.
 ```
 crawler/
 ├── fetchSite.py     # Crawl + extraction logic
-├── app.py           # Flask API + serves UI
-├── static/
-│   └── index.html   # Web UI
+├── api.py           # FastAPI endpoint
 └── .env             # API keys (not committed)
 ```
