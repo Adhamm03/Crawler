@@ -1,3 +1,4 @@
+
 # Company Info Crawler
 
 A Python tool that automatically gathers structured company intelligence by combining Tavily web search with OpenAI's GPT-4o-mini for extraction.
@@ -171,3 +172,6 @@ crawler/
 - Company name and country can be in any language (Arabic, English, etc.).
 - Page text is truncated to 15,000 characters before being sent to the LLM to stay within token limits.
 - The tool uses `gpt-4o-mini` by default for cost efficiency.
+=======
+# Crawler
+
