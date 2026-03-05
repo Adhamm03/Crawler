@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Company Info Lookup</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #f8fafc;
+    }
+
+    p.subtitle {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus {
+      border-color: #6366f1;
+    }
+
+    button {
+      width: 100%;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: #4f46e5; }
+    button:disabled { background: #3730a3; cursor: not-allowed; opacity: 0.6; }
+
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      background: #2d1b1b;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #fca5a5;
+      font-size: 0.875rem;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .results { display: none; }
+
+    .results h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    .field-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-high { background: #14532d; color: #86efac; }
+    .badge-low  { background: #422006; color: #fdba74; }
+    .badge-null { background: #1e293b; color: #475569; }
+
+    .field-value {
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    .field-value.empty { color: #475569; font-style: italic; }
+
+    .sources-section { margin-top: 4px; }
+
+    .sources-section summary {
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #6366f1;
+      user-select: none;
+      margin-bottom: 8px;
+    }
+
+    .sources-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .sources-list a {
+      font-size: 0.78rem;
+      color: #818cf8;
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+
+    .sources-list a:hover { text-decoration: underline; }
+
+    @media (max-width: 520px) {
+      .form-row, .field-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Company Info Lookup</h1>
+    <p class="subtitle">Enter a company name and country to fetch structured information via web search + AI extraction.</p>
+
+    <div class="card">
+      <div class="form-row">
+        <div>
+          <label for="company">Company Name</label>
+          <input id="company" type="text" placeholder="e.g. مدفوعاتكم" />
+        </div>
+        <div>
+          <label for="country">Country</label>
+          <input id="country" type="text" placeholder="e.g. الأردن" />
+        </div>
+      </div>
+      <button id="btn" onclick="lookup()">
+        <span id="btn-text">Look Up</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+      <div class="error-box" id="error"></div>
+    </div>
+
+    <div class="results card" id="results">
+      <h2>Results</h2>
+      <div class="field-grid" id="fields"></div>
+      <details class="sources-section" id="sources-details">
+        <summary>View sources</summary>
+        <ul class="sources-list" id="sources"></ul>
+      </details>
+    </div>
+  </div>
+
+  <script>
+    const FIELDS = ["description", "employee_count", "locations", "industry", "key_business_units"];
+    const LABELS = {
+      description: "Description",
+      employee_count: "Employee Count",
+      locations: "Locations",
+      industry: "Industry",
+      key_business_units: "Key Business Units"
+    };
+
+    async function lookup() {
+      const company = document.getElementById("company").value.trim();
+      const country = document.getElementById("country").value.trim();
+      const btn = document.getElementById("btn");
+      const spinner = document.getElementById("spinner");
+      const btnText = document.getElementById("btn-text");
+      const errorBox = document.getElementById("error");
+      const resultsDiv = document.getElementById("results");
+
+      if (!company || !country) {
+        showError("Please enter both company name and country.");
+        return;
+      }
+
+      errorBox.style.display = "none";
+      resultsDiv.style.display = "none";
+      btn.disabled = true;
+      btnText.style.display = "none";
+      spinner.style.display = "block";
+
+      try {
+        const res = await fetch("/company", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ company_name: company, country })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "Request failed.");
+          return;
+        }
+
+        renderResults(data);
+      } catch (e) {
+        showError("Network error: " + e.message);
+      } finally {
+        btn.disabled = false;
+        btnText.style.display = "inline";
+        spinner.style.display = "none";
+      }
+    }
+
+    function renderResults(data) {
+      const fieldsEl = document.getElementById("fields");
+      fieldsEl.innerHTML = "";
+
+      FIELDS.forEach(key => {
+        const item = data[key] || {};
+        const value = item.value;
+        const score = item.score;
+
+        const div = document.createElement("div");
+        div.className = "field" + (key === "description" || key === "key_business_units" ? " full" : "");
+
+        const badgeClass = score === "high" ? "badge-high" : score === "low" ? "badge-low" : "badge-null";
+        const badgeText = score || "n/a";
+
+        const displayValue = Array.isArray(value)
+          ? value.join(", ")
+          : (value !== null && value !== undefined ? String(value) : null);
+
+        div.innerHTML = `
+          <div class="field-label">
+            ${LABELS[key]}
+            <span class="badge ${badgeClass}">${badgeText}</span>
+          </div>
+          <div class="field-value ${!displayValue ? 'empty' : ''}">
+            ${displayValue || "Not found"}
+          </div>
+        `;
+        fieldsEl.appendChild(div);
+      });
+
+      const sourcesList = document.getElementById("sources");
+      sourcesList.innerHTML = "";
+      (data.source_urls || []).forEach(url => {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+        sourcesList.appendChild(li);
+      });
+
+      document.getElementById("results").style.display = "block";
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("error");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") lookup();
+    });
+  </script>
+</body>
+</html>
