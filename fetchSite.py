@@ -52,6 +52,7 @@ def get_company_info(company_name: str, country: str) -> dict:
     for f in DATA_FIELDS:
         result[f] = {"value": values[f], "score": scores[f]}
     result["source_urls"] = list(dict.fromkeys(source_urls))  # deduplicate, preserve order
+    result["news"] = news(company_name, country)
     return result
 
 
@@ -176,6 +177,45 @@ Content:
     except json.JSONDecodeError:
         return None
     return next((v for k, v in data.items() if k.lower() == field.lower()), None)
+
+
+def news(company_name: str, country: str) -> dict:
+    """Fetch the latest headlines from the top 5 search results and return a summary."""
+    res = requests.post(
+        "https://api.tavily.com/search",
+        json={
+            "api_key": TAVILY_KEY,
+            "query": f"{company_name} {country} latest news",
+            "max_results": 2,
+            "include_raw_content": False,
+        }
+    ).json()
+
+    articles = res.get("results", [])
+    if not articles:
+        return []
+
+    numbered = "\n".join(
+        f"{i+1}. Title: {r['title']}\n   Content: {r.get('content', '')[:300]}"
+        for i, r in enumerate(articles)
+    )
+
+    llm_res = requests.post(
+        "https://api.openai.com/v1/chat/completions",
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {OPENAI_KEY}"},
+        json={
+            "model": "gpt-4o-mini",
+            "max_tokens": 6000,
+            "temperature": 0.5,
+            "response_format": {"type": "json_object"},
+            "messages": [{"role": "user", "content":
+                f"Here are {len(articles)} the latest news articles of the company:\n\n{numbered}\n\n"
+                'Return a JSON object with a single key "summary" containing one concise paragraph summarizing the latest and most important news and updates.'
+            }]
+        }
+    ).json()
+
+    return json.loads(llm_res["choices"][0]["message"]["content"]).get("summary", "")
 
 
 # ── Run it ────────────────────────────────────────────────────────────────
